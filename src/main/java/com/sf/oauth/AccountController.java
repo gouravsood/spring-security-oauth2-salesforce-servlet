@@ -27,9 +27,17 @@ public class AccountController {
     public AccountController(WebClient webClient) {
         this.webClient = webClient;
     }
+    
+    @GetMapping("/")
+    public String index(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient authorizedClient,
+                        @AuthenticationPrincipal OAuth2User oauth2User,
+                        Model model) {
+        model.addAttribute("username", oauth2User.getAttributes().get("name"));
+        return "index";                            
+    }
  
     @GetMapping("/accounts")
-    public String index(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient authorizedClient,
+    public String accounts(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient authorizedClient,
                         @AuthenticationPrincipal OAuth2User oauth2User,
                         Model model) {
         String response = fetchAccounts(authorizedClient, (String) oauth2User.getAttributes().get("profile"));  
@@ -47,11 +55,11 @@ public class AccountController {
         return gson.toJson(je);              
     }
     
-    private String fetchAccounts(OAuth2AuthorizedClient authorizedClient, String queryURI) {
-        queryURI = queryURI.substring(0, queryURI.lastIndexOf("/"));
+    private String fetchAccounts(OAuth2AuthorizedClient authorizedClient, String userProfileURL) {
+        String sfHost = userProfileURL.substring(0, userProfileURL.lastIndexOf("/"));
         return this.webClient
                 .get()
-                .uri(queryURI, uriBuilder ->
+                .uri(sfHost, uriBuilder ->
                     uriBuilder
                     .path("/services/data/v51.0/query/")
                     .queryParam("q","SELECT Id, Name FROM Account LIMIT 5")
